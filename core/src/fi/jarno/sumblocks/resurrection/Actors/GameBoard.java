@@ -17,7 +17,7 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
 
 public class GameBoard extends Group{
 
-    private final float SWAP_SPEED = 0.375f;
+    private final float SWAP_SPEED = 0.275f;
     private final int BLOCK_OFFSET = 3;
     private final float BLOCK_SWAP_SCALE_SOURCE = 1.05f;
     private final float BLOCK_SWAP_SCALE_DESTINATION = .9f;
