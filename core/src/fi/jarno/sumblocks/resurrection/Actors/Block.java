@@ -56,6 +56,10 @@ public class Block extends Actor{
         updateColor();
     }
 
+    public void setGridPos(Vector2 newPos){
+        _gridPos.set(newPos);
+    }
+
     private void updateColor(){
         switch (_colorID){
             case Globals.BLOCK_RED_ID:
