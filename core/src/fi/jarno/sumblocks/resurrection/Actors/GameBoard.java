@@ -20,7 +20,7 @@ public class GameBoard extends Group{
     private final float SWAP_SPEED = 0.375f;
     private final int BLOCK_OFFSET = 3;
     private final float BLOCK_SWAP_SCALE_SOURCE = 1.05f;
-    private final float BLOCK_SWAP_SCALE_DESTINATION = .95f;
+    private final float BLOCK_SWAP_SCALE_DESTINATION = .9f;
 
     private float _boardWidth;
     private float _boardHeight;
@@ -28,6 +28,9 @@ public class GameBoard extends Group{
     private int _row;
     private float _blockWidth;
     private float _blockHeight;
+
+    private Vector2 _srcGridPos;
+    private Vector2 _dstGridPos;
 
     private Vector2 _touch, _drag, _delta;
     private Block _destination, _source;
@@ -43,6 +46,8 @@ public class GameBoard extends Group{
         _touch = new Vector2();
         _drag = new Vector2();
         _delta = new Vector2();
+        _srcGridPos = new Vector2();
+        _dstGridPos = new Vector2();
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
         initBoard();
@@ -110,24 +115,39 @@ public class GameBoard extends Group{
         return null;
     }
 
-    private void swapBlockSpots(Actor source, Actor destination){
+    private void swapBlockSpots(final Block source, final Block destination){
         if(source != null && destination != null){
             source.setZIndex(2);
             destination.setZIndex(1);
 
-            source.addAction(
+            _srcGridPos.set(source.getGridPos());
+            _dstGridPos.set(destination.getGridPos());
+
+            source.addAction(Actions.sequence(
                     Actions.parallel(Actions.moveTo(destination.getX(), destination.getY(), SWAP_SPEED, Interpolation.exp5Out),
                     Actions.sequence(
                             Actions.scaleTo(BLOCK_SWAP_SCALE_SOURCE, BLOCK_SWAP_SCALE_SOURCE, SWAP_SPEED / 2),
                             Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
-                    ));
+                    ), Actions.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            source.setGridPos(_dstGridPos);
+                        }
+                    })
+            ));
 
-            destination.addAction(
+            destination.addAction(Actions.sequence(
                     Actions.parallel(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.exp5Out),
                     Actions.sequence(
                             Actions.scaleTo(BLOCK_SWAP_SCALE_DESTINATION, BLOCK_SWAP_SCALE_DESTINATION, SWAP_SPEED / 2),
                             Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
-                    ));
+                    ), Actions.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            destination.setGridPos(_srcGridPos);
+                        }
+                    })
+            ));
         }
     }
 
