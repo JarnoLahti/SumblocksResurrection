@@ -1,18 +1,13 @@
 package fi.jarno.sumblocks.resurrection.Actors;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
+
+import java.util.Random;
 
 import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
 
@@ -22,9 +17,11 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
 
 public class GameBoard extends Group{
 
-    private final float SWAP_SPEED = 0.5f;
+    private final float SWAP_SPEED = 0.375f;
+    private final int BLOCK_OFFSET = 3;
+    private final float BLOCK_SWAP_SCALE_SOURCE = 1.05f;
+    private final float BLOCK_SWAP_SCALE_DESTINATION = .95f;
 
-    private ShapeRenderer _sh;
     private float _boardWidth;
     private float _boardHeight;
     private int _col;
@@ -35,9 +32,8 @@ public class GameBoard extends Group{
     private Vector2 _touch, _drag, _delta;
     private Block _destination, _source;
 
-    public GameBoard(int width, int height, int col, int row){
+    public GameBoard(int posX, int posY, int width, int height, int col, int row){
         super();
-        _sh = new ShapeRenderer();
         _col = col;
         _row = row;
         _boardWidth = width;
@@ -47,25 +43,29 @@ public class GameBoard extends Group{
         _touch = new Vector2();
         _drag = new Vector2();
         _delta = new Vector2();
-        this.setBounds(0, 0, width, height);
-        this.setOrigin(width / 2, height / 2);
+        setBounds(posX, posY, width, height);
+        setOrigin(width / 2, height / 2);
         initBoard();
     }
 
     private void initBoard(){
-        for(int j = 0; j < _row; j++){
-            for(int i = 0; i < _col; i++) {
+        for(int y = 0; y < _row; y++){
+            for(int x = 0; x < _col; x++) {
                 Block block = new Block(
-                        (i * _blockWidth),
-                        (j * _blockHeight),
-                        _blockWidth,
-                        _blockHeight,
-                        new Vector3(0 + (int) (Math.random() * 255), 0 + (int) (Math.random() * 255), 0 + (int) (Math.random() * 255)),
-                        j,
-                        i);
+                        (x * _blockWidth) + BLOCK_OFFSET,
+                        (y * _blockHeight) + BLOCK_OFFSET,
+                        _blockWidth - BLOCK_OFFSET,
+                        _blockHeight - BLOCK_OFFSET,
+                        x,
+                        y,
+                        randomizeBlockColor());
                 this.addActor(block);
             }
         }
+    }
+
+    private int randomizeBlockColor(){
+        return new Random().nextInt(5);
     }
 
     private void handleInput(final Vector2 touchPos, final SwipeDirection direction){
@@ -98,7 +98,7 @@ public class GameBoard extends Group{
         }
     }
 
-    private Actor getActorFromGridPos(int col, int row){
+    private Block getActorFromGridPos(int col, int row){
         for(Actor a : getChildren()){
             if(a instanceof Block){
                 _destination = (Block)a;
@@ -114,8 +114,20 @@ public class GameBoard extends Group{
         if(source != null && destination != null){
             source.setZIndex(2);
             destination.setZIndex(1);
-            source.addAction(Actions.moveTo(destination.getX(), destination.getY(), SWAP_SPEED, Interpolation.bounceOut));
-            destination.addAction(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.bounceOut));
+
+            source.addAction(
+                    Actions.parallel(Actions.moveTo(destination.getX(), destination.getY(), SWAP_SPEED, Interpolation.exp5Out),
+                    Actions.sequence(
+                            Actions.scaleTo(BLOCK_SWAP_SCALE_SOURCE, BLOCK_SWAP_SCALE_SOURCE, SWAP_SPEED / 2),
+                            Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
+                    ));
+
+            destination.addAction(
+                    Actions.parallel(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.exp5Out),
+                    Actions.sequence(
+                            Actions.scaleTo(BLOCK_SWAP_SCALE_DESTINATION, BLOCK_SWAP_SCALE_DESTINATION, SWAP_SPEED / 2),
+                            Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
+                    ));
         }
     }
 

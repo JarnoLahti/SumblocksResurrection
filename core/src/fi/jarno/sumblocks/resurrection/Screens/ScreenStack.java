@@ -25,7 +25,7 @@ public class ScreenStack {
 
     private ScreenStack() {
         _game = new SumblocksResurrection();
-        _screens = new ArrayList<Screen>();
+        _screens = new ArrayList();
         _stackSize = 0;
     }
 
