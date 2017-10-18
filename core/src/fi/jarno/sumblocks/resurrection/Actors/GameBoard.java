@@ -1,6 +1,11 @@
 package fi.jarno.sumblocks.resurrection.Actors;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -16,7 +21,6 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
  */
 
 public class GameBoard extends Group{
-
     private final float SWAP_SPEED = 0.275f;
     private final int BLOCK_OFFSET = 3;
     private final float BLOCK_SWAP_SCALE_SOURCE = 1.05f;
@@ -29,10 +33,12 @@ public class GameBoard extends Group{
     private float _blockWidth;
     private float _blockHeight;
 
-    private Vector2 _srcGridPos;
-    private Vector2 _dstGridPos;
+    private Vector2 _touch = new Vector2(),
+                    _drag = new Vector2(),
+                    _delta = new Vector2(),
+                    _srcGridPos = new Vector2(),
+                    _dstGridPos = new Vector2();
 
-    private Vector2 _touch, _drag, _delta;
     private Block _destination, _source;
 
     public GameBoard(int posX, int posY, int width, int height, int cols, int rows){
@@ -43,17 +49,25 @@ public class GameBoard extends Group{
         _boardHeight = height;
         _blockWidth = _boardWidth / _cols;
         _blockHeight = _boardHeight / _rows;
-        _touch = new Vector2();
-        _drag = new Vector2();
-        _delta = new Vector2();
-        _srcGridPos = new Vector2();
-        _dstGridPos = new Vector2();
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
-        initBoard();
+        BitmapFont font = initBlockFont();
+        initBoard(font);
     }
 
-    private void initBoard(){
+    private BitmapFont initBlockFont() {
+        BitmapFont blockFont;
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Roboto-Regular.ttf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.color = new Color(1,1,1,1);
+        parameter.size = 30;
+        parameter.flip = true;
+        blockFont = generator.generateFont(parameter);
+        generator.dispose();
+        return blockFont;
+    }
+
+    private void initBoard(BitmapFont font){
         for(int y = 0; y < _rows; y++){
             for(int x = 0; x < _cols; x++) {
                 Block block = new Block(
@@ -63,7 +77,8 @@ public class GameBoard extends Group{
                         _blockHeight - BLOCK_OFFSET,
                         x,
                         y,
-                        randomizeBlockColor());
+                        randomizeBlockColor(),
+                        font);
                 this.addActor(block);
             }
         }

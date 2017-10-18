@@ -2,6 +2,8 @@ package fi.jarno.sumblocks.resurrection.Actors;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -14,19 +16,23 @@ import fi.jarno.sumblocks.resurrection.Globals;
  */
 
 public class Block extends Actor{
-    private ShapeRenderer _sh;
-    private  Color _color;
+    private ShapeRenderer _sh = new ShapeRenderer();
+    private  Color _color = new Color();
+    private GlyphLayout _textSize = new GlyphLayout();
+
     private Vector2 _gridPos;
     private int _colorID;
+    private BitmapFont _font;
+    private int _value = 0;
 
-    public Block(float x, float y, float width, float height, int column, int row, int colorID){
+    public Block(float x, float y, float width, float height, int column, int row, int colorID, BitmapFont font){
         super();
         setBounds(x, y, width, height);
         setOrigin(width / 2, height / 2);
-        _sh = new ShapeRenderer();
         _gridPos = new Vector2(column, row);
         _colorID = colorID;
-        _color = new Color();
+        _font = font;
+        _value = colorID * 10;
         updateColor();
         setZIndex(1);
     }
@@ -49,11 +55,8 @@ public class Block extends Actor{
         _sh.end();
 
         batch.begin();
-    }
-
-    public void setColor(int colorId){
-        _colorID = colorId;
-        updateColor();
+        _textSize.setText(_font, Integer.toString(_value));
+        _font.draw(batch, Integer.toString(_value), (getX() + getOriginX()) - (_textSize.width / 2), (getY() + getOriginY()) - (_textSize.height / 2));
     }
 
     public void setGridPos(Vector2 newPos){
@@ -80,10 +83,10 @@ public class Block extends Actor{
                            toColorFloat(245),
                            0);
                 break;
-            case Globals.BLOCK_YELLOW_ID:
+            case Globals.BLOCK_ORANGE_ID:
                 _color.set(toColorFloat(255),
-                           toColorFloat(238),
-                           toColorFloat(88),
+                           toColorFloat(167),
+                           toColorFloat(38),
                            0f);
                 break;
             case Globals.BLOCK_PURPLE_ID:
