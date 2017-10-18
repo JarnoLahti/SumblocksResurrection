@@ -95,6 +95,6 @@ public class Block extends Actor{
         if(colorValue <= 0 || colorValue >= 255){
             return colorValue <= 0 ? 0f:1f;
         }
-        return ((float)colorValue / 255f);
+        return (colorValue / 255f);
     }
 }

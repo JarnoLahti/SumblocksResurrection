@@ -32,7 +32,7 @@ public class GameBoard extends Group{
     private Vector2 _touch, _drag, _delta;
     private Block _destination, _source;
 
-    public GameBoard(int width, int height, int col, int row){
+    public GameBoard(int posX, int posY, int width, int height, int col, int row){
         super();
         _col = col;
         _row = row;
@@ -43,7 +43,7 @@ public class GameBoard extends Group{
         _touch = new Vector2();
         _drag = new Vector2();
         _delta = new Vector2();
-        setBounds(0, 0, width, height);
+        setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
         initBoard();
     }
@@ -121,7 +121,7 @@ public class GameBoard extends Group{
                             Actions.scaleTo(BLOCK_SWAP_SCALE_SOURCE, BLOCK_SWAP_SCALE_SOURCE, SWAP_SPEED / 2),
                             Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
                     ));
-            
+
             destination.addAction(
                     Actions.parallel(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.exp5Out),
                     Actions.sequence(

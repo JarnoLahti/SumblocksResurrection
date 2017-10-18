@@ -23,8 +23,14 @@ public class GameScreen extends Stage implements Screen {
         _camera = new GameCamera();
         _camera.setToOrtho(true);
         setViewport(new ExtendViewport(Globals.VIRTUAL_WIDTH, Globals.VIRTUAL_HEIGHT, _camera));
-        _board = new GameBoard(Globals.GAME_BOARD_WIDTH, Globals.GAME_BOARD_HEIGHT, Globals.GAME_BOARD_COLUMNS, Globals.GAME_BOARD_ROWS);
-        _board.setPosition((Globals.VIRTUAL_WIDTH / 2) - _board.getOriginX(), (Globals.VIRTUAL_HEIGHT / 2) - _board.getOriginY());
+        _board = new GameBoard(
+                (Globals.VIRTUAL_WIDTH / 2) - (Globals.GAME_BOARD_WIDTH / 2),
+                (Globals.VIRTUAL_HEIGHT / 2) - (Globals.GAME_BOARD_HEIGHT / 2),
+                Globals.GAME_BOARD_WIDTH,
+                Globals.GAME_BOARD_HEIGHT,
+                Globals.GAME_BOARD_COLUMNS,
+                Globals.GAME_BOARD_ROWS);
+
         addActor(_board);
         Gdx.input.setInputProcessor(_board.getInputAdapter());
     }
