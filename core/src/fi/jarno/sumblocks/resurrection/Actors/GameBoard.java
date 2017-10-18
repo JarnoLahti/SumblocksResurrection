@@ -24,8 +24,8 @@ public class GameBoard extends Group{
 
     private float _boardWidth;
     private float _boardHeight;
-    private int _col;
-    private int _row;
+    private int _cols;
+    private int _rows;
     private float _blockWidth;
     private float _blockHeight;
 
@@ -35,14 +35,14 @@ public class GameBoard extends Group{
     private Vector2 _touch, _drag, _delta;
     private Block _destination, _source;
 
-    public GameBoard(int posX, int posY, int width, int height, int col, int row){
+    public GameBoard(int posX, int posY, int width, int height, int cols, int rows){
         super();
-        _col = col;
-        _row = row;
+        _cols = cols;
+        _rows = rows;
         _boardWidth = width;
         _boardHeight = height;
-        _blockWidth = _boardWidth / _col;
-        _blockHeight = _boardHeight / _row;
+        _blockWidth = _boardWidth / _cols;
+        _blockHeight = _boardHeight / _rows;
         _touch = new Vector2();
         _drag = new Vector2();
         _delta = new Vector2();
@@ -54,8 +54,8 @@ public class GameBoard extends Group{
     }
 
     private void initBoard(){
-        for(int y = 0; y < _row; y++){
-            for(int x = 0; x < _col; x++) {
+        for(int y = 0; y < _rows; y++){
+            for(int x = 0; x < _cols; x++) {
                 Block block = new Block(
                         (x * _blockWidth) + BLOCK_OFFSET,
                         (y * _blockHeight) + BLOCK_OFFSET,
@@ -157,7 +157,6 @@ public class GameBoard extends Group{
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
                 getStage().getViewport().unproject(_touch.set(screenX, screenY));
                 stageToLocalCoordinates(_touch);
-                System.out.println("TOUCHING");
                 return true;
             }
 
@@ -165,7 +164,6 @@ public class GameBoard extends Group{
             public boolean touchDragged(int screenX, int screenY, int pointer) {
                 getStage().getViewport().unproject(_drag.set(screenX, screenY));
                 stageToLocalCoordinates(_drag);
-                System.out.println("DRAGGING");
                 return true;
             }
 
