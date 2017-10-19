@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -24,8 +25,9 @@ public class Block extends Actor{
     private int _colorID;
     private BitmapFont _font;
     private int _value = 0;
+    private ShaderProgram _fontShader;
 
-    public Block(float x, float y, float width, float height, int column, int row, int colorID, BitmapFont font){
+    public Block(float x, float y, float width, float height, int column, int row, int colorID, BitmapFont font, ShaderProgram fontShader){
         super();
         setBounds(x, y, width, height);
         setOrigin(width / 2, height / 2);
@@ -35,6 +37,7 @@ public class Block extends Actor{
         _value = colorID * 10;
         updateColor();
         setZIndex(1);
+        _fontShader = fontShader;
     }
 
     public Vector2 getGridPos(){
@@ -54,9 +57,13 @@ public class Block extends Actor{
         _sh.rect(getX(), getY(), getOriginX(), getOriginY(), getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation());
         _sh.end();
 
+
         batch.begin();
+        batch.setShader(_fontShader);
+        _font.getData().setScale(getScaleX());
         _textSize.setText(_font, Integer.toString(_value));
         _font.draw(batch, Integer.toString(_value), (getX() + getOriginX()) - (_textSize.width / 2), (getY() + getOriginY()) - (_textSize.height / 2));
+        batch.setShader(null);
     }
 
     public void setGridPos(Vector2 newPos){
