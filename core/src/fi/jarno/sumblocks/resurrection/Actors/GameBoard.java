@@ -2,19 +2,17 @@ package fi.jarno.sumblocks.resurrection.Actors;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.Touchable;
-import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 
 import java.util.Random;
 
+import fi.jarno.sumblocks.resurrection.Resources.BlockActions;
 import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
 
 /**
@@ -22,10 +20,7 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
  */
 
 public class GameBoard extends Group{
-    private final float SWAP_SPEED = 0.275f;
     private final int BLOCK_OFFSET = 3;
-    private final float BLOCK_SWAP_SCALE_SOURCE = 1.05f;
-    private final float BLOCK_SWAP_SCALE_DESTINATION = .9f;
 
     private float _boardWidth;
     private float _boardHeight;
@@ -51,22 +46,22 @@ public class GameBoard extends Group{
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
         BitmapFont font = initBlockFont();
-        initBoard(font);
+        ShaderProgram fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
+        if (!fontShader.isCompiled()) {
+            Gdx.app.error("fontShader", "compilation failed:\n" + fontShader.getLog());
+        }
+        initBoard(font, fontShader);
     }
 
     private BitmapFont initBlockFont() {
         BitmapFont blockFont;
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Roboto-Regular.ttf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.color = new Color(1,1,1,1);
-        parameter.size = 30;
-        parameter.flip = true;
-        blockFont = generator.generateFont(parameter);
-        generator.dispose();
+        Texture texture = new Texture(Gdx.files.internal("fonts/block_font.png"));
+        texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        blockFont = new BitmapFont(Gdx.files.internal("fonts/block_font.fnt"), new TextureRegion(texture), true);
         return blockFont;
     }
 
-    private void initBoard(BitmapFont font){
+    private void initBoard(BitmapFont font, ShaderProgram fontShader){
         for(int y = 0; y < _rows; y++){
             for(int x = 0; x < _cols; x++) {
                 Block block = new Block(
@@ -77,7 +72,8 @@ public class GameBoard extends Group{
                         x,
                         y,
                         randomizeBlockColor(),
-                        font);
+                        font,
+                        fontShader);
                 this.addActor(block);
             }
         }
@@ -149,30 +145,8 @@ public class GameBoard extends Group{
         final Vector2 srcGridPos = new Vector2().set(source.getGridPos());
         final Vector2 dstGridPos = new Vector2().set(destination.getGridPos());
 
-        source.addAction(Actions.sequence(
-                Actions.parallel(Actions.moveTo(destination.getX(), destination.getY(), SWAP_SPEED, Interpolation.exp5Out),
-                Actions.sequence(
-                        Actions.scaleTo(BLOCK_SWAP_SCALE_SOURCE, BLOCK_SWAP_SCALE_SOURCE, SWAP_SPEED / 2),
-                        Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
-                ), Actions.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        source.setGridPos(dstGridPos);
-                    }
-                })
-        ));
-
-        destination.addAction(Actions.sequence(
-                Actions.parallel(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.exp5Out),
-                Actions.sequence(
-                        Actions.scaleTo(BLOCK_SWAP_SCALE_DESTINATION, BLOCK_SWAP_SCALE_DESTINATION, SWAP_SPEED / 2),
-                        Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
-                ), Actions.run(new Runnable() {
-                    @Override
-                    public void run() {destination.setGridPos(srcGridPos);}
-                })
-        ));
-
+        source.addAction(BlockActions.blockOverSwap(source, destination, dstGridPos));
+        destination.addAction(BlockActions.blockUnderSwap(source, destination, srcGridPos));
     }
 
     public InputAdapter getInputAdapter(){
