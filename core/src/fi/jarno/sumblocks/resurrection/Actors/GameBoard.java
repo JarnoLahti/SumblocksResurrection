@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 
 import java.util.Random;
@@ -35,9 +36,7 @@ public class GameBoard extends Group{
 
     private Vector2 _touch = new Vector2(),
                     _drag = new Vector2(),
-                    _delta = new Vector2(),
-                    _srcGridPos = new Vector2(),
-                    _dstGridPos = new Vector2();
+                    _delta = new Vector2();
 
     private Block _destination, _source;
 
@@ -91,6 +90,10 @@ public class GameBoard extends Group{
     private void handleInput(final Vector2 touchPos, final SwipeDirection direction){
         Actor a = hit(touchPos.x, touchPos.y, false);
 
+        if(!(a instanceof Block)){
+            return;
+        }
+
         _source = (Block)a;
 
         if(_source == null) {
@@ -100,25 +103,30 @@ public class GameBoard extends Group{
         if(_source.hasActions()){
             return;
         }
+
         switch (direction){
             case left:
-                swapBlockSpots(_source, getActorFromGridPos((int)_source.getGridPos().x - 1, (int)_source.getGridPos().y));
+                _destination = getBlockFromGridPos((int)_source.getGridPos().x - 1, (int)_source.getGridPos().y);
                 break;
             case right:
-                swapBlockSpots(_source, getActorFromGridPos((int)_source.getGridPos().x + 1, (int)_source.getGridPos().y));
+                _destination = getBlockFromGridPos((int)_source.getGridPos().x + 1, (int)_source.getGridPos().y);
                 break;
             case up:
-                swapBlockSpots(_source, getActorFromGridPos((int)_source.getGridPos().x, (int)_source.getGridPos().y - 1));
+                _destination = getBlockFromGridPos((int)_source.getGridPos().x, (int)_source.getGridPos().y - 1);
                 break;
             case down:
-                swapBlockSpots(_source, getActorFromGridPos((int)_source.getGridPos().x, (int)_source.getGridPos().y + 1));
+                _destination = getBlockFromGridPos((int)_source.getGridPos().x, (int)_source.getGridPos().y + 1);
                 break;
             default:
                 return;
         }
+
+        if(_destination != null){
+            swapBlockSpots(_source, _destination);
+        }
     }
 
-    private Block getActorFromGridPos(int col, int row){
+    private Block getBlockFromGridPos(int col, int row){
         for(Actor a : getChildren()){
             if(a instanceof Block){
                 _destination = (Block)a;
@@ -131,39 +139,40 @@ public class GameBoard extends Group{
     }
 
     private void swapBlockSpots(final Block source, final Block destination){
-        if(source != null && destination != null){
-            source.setZIndex(2);
-            destination.setZIndex(1);
-
-            _srcGridPos.set(source.getGridPos());
-            _dstGridPos.set(destination.getGridPos());
-
-            source.addAction(Actions.sequence(
-                    Actions.parallel(Actions.moveTo(destination.getX(), destination.getY(), SWAP_SPEED, Interpolation.exp5Out),
-                    Actions.sequence(
-                            Actions.scaleTo(BLOCK_SWAP_SCALE_SOURCE, BLOCK_SWAP_SCALE_SOURCE, SWAP_SPEED / 2),
-                            Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
-                    ), Actions.run(new Runnable() {
-                        @Override
-                        public void run() {
-                            source.setGridPos(_dstGridPos);
-                        }
-                    })
-            ));
-
-            destination.addAction(Actions.sequence(
-                    Actions.parallel(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.exp5Out),
-                    Actions.sequence(
-                            Actions.scaleTo(BLOCK_SWAP_SCALE_DESTINATION, BLOCK_SWAP_SCALE_DESTINATION, SWAP_SPEED / 2),
-                            Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
-                    ), Actions.run(new Runnable() {
-                        @Override
-                        public void run() {
-                            destination.setGridPos(_srcGridPos);
-                        }
-                    })
-            ));
+        if(source == null && destination == null){
+            return;
         }
+
+        source.setZIndex(2);
+        destination.setZIndex(1);
+
+        final Vector2 srcGridPos = new Vector2().set(source.getGridPos());
+        final Vector2 dstGridPos = new Vector2().set(destination.getGridPos());
+
+        source.addAction(Actions.sequence(
+                Actions.parallel(Actions.moveTo(destination.getX(), destination.getY(), SWAP_SPEED, Interpolation.exp5Out),
+                Actions.sequence(
+                        Actions.scaleTo(BLOCK_SWAP_SCALE_SOURCE, BLOCK_SWAP_SCALE_SOURCE, SWAP_SPEED / 2),
+                        Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
+                ), Actions.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        source.setGridPos(dstGridPos);
+                    }
+                })
+        ));
+
+        destination.addAction(Actions.sequence(
+                Actions.parallel(Actions.moveTo(source.getX(), source.getY(), SWAP_SPEED, Interpolation.exp5Out),
+                Actions.sequence(
+                        Actions.scaleTo(BLOCK_SWAP_SCALE_DESTINATION, BLOCK_SWAP_SCALE_DESTINATION, SWAP_SPEED / 2),
+                        Actions.scaleTo(1f, 1f, SWAP_SPEED / 2))
+                ), Actions.run(new Runnable() {
+                    @Override
+                    public void run() {destination.setGridPos(srcGridPos);}
+                })
+        ));
+
     }
 
     public InputAdapter getInputAdapter(){
@@ -185,7 +194,7 @@ public class GameBoard extends Group{
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
                 if(_drag.isZero()){
-                    return false;
+                    return true;
                 }
 
                 _delta = _drag.sub(_touch);
