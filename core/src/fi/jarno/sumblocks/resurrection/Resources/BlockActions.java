@@ -13,6 +13,8 @@ import fi.jarno.sumblocks.resurrection.Actors.Block;
  */
 
 public class BlockActions {
+    private static final float BLOCK_INIT_SCALE = 1.1f;
+    public static final float BLOCK_INIT_DELAY = .02f;
     private static final float BLOCK_SWAP_SCALE_SOURCE = 1.1f;
     private static final float BLOCK_SWAP_SCALE_DESTINATION = .9f;
     private static final float SWAP_SPEED = .275f;
@@ -40,5 +42,9 @@ public class BlockActions {
                     @Override
                     public void run() {destination.setGridPos(sourceGridPos);}
                 }));
+    }
+
+    public static Action blockInit(float duration){
+        return Actions.sequence(Actions.delay(duration), Actions.scaleTo(BLOCK_INIT_SCALE, BLOCK_INIT_SCALE, .3f), Actions.scaleTo(1f, 1f, .1f));
     }
 }
