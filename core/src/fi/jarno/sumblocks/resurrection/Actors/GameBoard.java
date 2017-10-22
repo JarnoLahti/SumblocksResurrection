@@ -29,8 +29,6 @@ public class GameBoard extends Group{
     private float _blockWidth;
     private float _blockHeight;
 
-    private Block[][] _blocks;
-
     private Vector2 _touch = new Vector2(),
                     _drag = new Vector2(),
                     _delta = new Vector2();
@@ -41,7 +39,6 @@ public class GameBoard extends Group{
         super();
         _cols = cols;
         _rows = rows;
-        _blocks = new Block[_cols][_rows];
         _boardWidth = width;
         _boardHeight = height;
         _blockWidth = _boardWidth / _cols;
@@ -131,6 +128,7 @@ public class GameBoard extends Group{
                         colorMap[x][y],
                         font,
                         fontShader);
+                block.setScale(0);
                 this.addActor(block);
                 block.addAction(BlockActions.blockInit(initDelay));
                 initDelay += BlockActions.BLOCK_INIT_DELAY;
@@ -227,7 +225,6 @@ public class GameBoard extends Group{
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
                 if(_drag.isZero()){
-                    initBoard();
                     return true;
                 }
 

@@ -30,7 +30,6 @@ public class Block extends Actor{
         super();
         setBounds(x, y, width, height);
         setOrigin(width / 2, height / 2);
-        setScale(0);
         updateColor(colorID);
         _gridPos = new Vector2(column, row);
         _font = font;
