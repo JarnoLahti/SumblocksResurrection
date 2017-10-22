@@ -7,10 +7,9 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
-import fi.jarno.sumblocks.resurrection.Globals;
+import fi.jarno.sumblocks.resurrection.Resources.BlockColors;
 
 /**
  * Created by Jarno on 08-Jul-17.
@@ -18,7 +17,7 @@ import fi.jarno.sumblocks.resurrection.Globals;
 
 public class Block extends Actor{
     private ShapeRenderer _sh = new ShapeRenderer();
-    private  Color _color = new Color();
+    private Color _color = new Color();
     private GlyphLayout _textSize = new GlyphLayout();
 
     private Vector2 _gridPos;
@@ -31,11 +30,10 @@ public class Block extends Actor{
         super();
         setBounds(x, y, width, height);
         setOrigin(width / 2, height / 2);
+        updateColor(colorID);
         _gridPos = new Vector2(column, row);
-        _colorID = colorID;
         _font = font;
         _value = colorID * 10;
-        updateColor();
         setZIndex(1);
         _fontShader = fontShader;
     }
@@ -57,8 +55,11 @@ public class Block extends Actor{
         _sh.rect(getX(), getY(), getOriginX(), getOriginY(), getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation());
         _sh.end();
 
-
         batch.begin();
+        if(getScaleX() == 0 || getScaleY() == 0){
+            return;
+        }
+
         batch.setShader(_fontShader);
         _font.getData().setScale(getScaleX());
         _textSize.setText(_font, Integer.toString(_value));
@@ -70,45 +71,26 @@ public class Block extends Actor{
         _gridPos.set(newPos);
     }
 
-    private void updateColor(){
-        switch (_colorID){
-            case Globals.BLOCK_RED_ID:
-                _color.set(toColorFloat(239),
-                           toColorFloat(83),
-                           toColorFloat(80),
-                           0);
+    private void updateColor(int colorID){
+        switch (colorID){
+            case BlockColors.RED_ID:
+                _color.set(BlockColors.RED);
                 break;
-            case Globals.BLOCK_GREEN_ID:
-                _color.set(toColorFloat(102),
-                           toColorFloat(187),
-                           toColorFloat(106),
-                           0);
+            case BlockColors.GREEN_ID:
+                _color.set(BlockColors.GREEN);
                 break;
-            case Globals.BLOCK_BLUE_ID:
-                _color.set(toColorFloat(66),
-                           toColorFloat(165),
-                           toColorFloat(245),
-                           0);
+            case BlockColors.BLUE_ID:
+                _color.set(BlockColors.BLUE);
                 break;
-            case Globals.BLOCK_ORANGE_ID:
-                _color.set(toColorFloat(255),
-                           toColorFloat(167),
-                           toColorFloat(38),
-                           0f);
+            case BlockColors.ORANGE_ID:
+                _color.set(BlockColors.ORANGE);
                 break;
-            case Globals.BLOCK_PURPLE_ID:
-                _color.set(toColorFloat(126),
-                           toColorFloat(87),
-                           toColorFloat(194),
-                           0);
+            case BlockColors.PURPLE_ID:
+                _color.set(BlockColors.PURPLE);
                 break;
+            default:
+                return;
         }
-    }
-
-    private float toColorFloat(int colorValue){
-        if(colorValue <= 0 || colorValue >= 255){
-            return colorValue <= 0 ? 0f:1f;
-        }
-        return (colorValue / 255f);
+        _colorID = colorID;
     }
 }

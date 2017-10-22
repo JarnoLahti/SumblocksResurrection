@@ -45,12 +45,7 @@ public class GameBoard extends Group{
         _blockHeight = _boardHeight / _rows;
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
-        BitmapFont font = initBlockFont();
-        ShaderProgram fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
-        if (!fontShader.isCompiled()) {
-            Gdx.app.error("fontShader", "compilation failed:\n" + fontShader.getLog());
-        }
-        initBoard(font, fontShader);
+        initBoard();
     }
 
     private BitmapFont initBlockFont() {
@@ -61,7 +56,66 @@ public class GameBoard extends Group{
         return blockFont;
     }
 
-    private void initBoard(BitmapFont font, ShaderProgram fontShader){
+    private void initBoard(){
+        getChildren().clear();
+        BitmapFont font = initBlockFont();
+        ShaderProgram fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
+        if (!fontShader.isCompiled()) {
+            Gdx.app.error("fontShader", "compilation failed:\n" + fontShader.getLog());
+        }
+
+        boolean noMatches;
+
+        int[][] colorMap = new int[_cols][_rows];
+
+        do{
+            noMatches = true;
+
+            for(int y = 0; y < _rows; y++){
+                for(int x = 0; x < _cols; x++) {
+                    colorMap[x][y] = randomizeBlockColor();
+                }
+            }
+
+            int match = 1;
+            int lastColor = 10;
+
+            // CHECK MATCHES HORIZONTIALLY
+            for(int y = 0; y < _rows; y++){
+                for(int x = 0; x < _cols; x++) {
+                    int currentColor = colorMap[x][y];
+                    match = currentColor == lastColor ? match+1:1;
+                    lastColor = currentColor;
+                    if(match > 2){
+                        noMatches = false;
+                    }
+                }
+                lastColor = 10;
+                match = 1;
+            }
+
+            if(!noMatches){
+                continue; // if we already got a match, no need to check vertically
+            }
+
+            // CHECK MATCHES VERTICALLY
+            for(int x = 0; x < _cols; x++) {
+                for(int y = 0; y < _rows; y++){
+                    int currentColor = colorMap[x][y];
+                    match = currentColor == lastColor ? match+1:1;
+                    lastColor = currentColor;
+                    if(match > 2){
+                        noMatches = false;
+                    }
+                }
+                lastColor = 10;
+                match = 1;
+            }
+
+        }while(!noMatches);
+
+        // INIT THE BOARD WITH COLOR MAP
+        float initDelay = 0;
         for(int y = 0; y < _rows; y++){
             for(int x = 0; x < _cols; x++) {
                 Block block = new Block(
@@ -71,10 +125,13 @@ public class GameBoard extends Group{
                         _blockHeight - BLOCK_OFFSET,
                         x,
                         y,
-                        randomizeBlockColor(),
+                        colorMap[x][y],
                         font,
                         fontShader);
+                block.setScale(0);
                 this.addActor(block);
+                block.addAction(BlockActions.blockInit(initDelay));
+                initDelay += BlockActions.BLOCK_INIT_DELAY;
             }
         }
     }
