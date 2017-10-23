@@ -7,11 +7,11 @@ import com.badlogic.gdx.graphics.Color;
  */
 
 public class BlockColors {
-    public static final int RED_ID = 0;
-    public static final int GREEN_ID = 1;
-    public static final int BLUE_ID = 2;
-    public static final int ORANGE_ID = 3;
-    public static final int PURPLE_ID = 4;
+    public static final int RED_ID = 1;
+    public static final int GREEN_ID = 2;
+    public static final int BLUE_ID = 3;
+    public static final int ORANGE_ID = 4;
+    public static final int PURPLE_ID = 5;
     private BlockColors(){}
     public static final Color RED = new Color(239/255f, 83/255f, 80/255f, 0f);
     public static final Color GREEN = new Color(102/255f, 187/255f, 106/255f, 0f);
