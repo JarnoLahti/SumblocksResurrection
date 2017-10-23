@@ -45,8 +45,8 @@ public class GameBoard extends Group{
             //check for matches
             int[][] colorSnapShot = getColorArraySnapshot();
 
-            int match = 1;
-            int lastColor = 10;
+            int match = 0;
+            int lastColor = 0;
 
             int[][] hMatchMap = new int[_cols][_rows];
             int[][] vMatchMap = new int[_cols][_rows];
@@ -55,38 +55,38 @@ public class GameBoard extends Group{
             for(int y = 0; y < _rows; y++){
                 for(int x = 0; x < _cols; x++) {
                     int currentColor = colorSnapShot[x][y];
-                    match = currentColor == lastColor ? match+1:1;
+                    match = currentColor == lastColor ? match+1:0;
                     lastColor = currentColor;
-                    if(match == 3){
+                    if(match == 2){
                        //match found collect all previous x values
                         for(int i = (x - 2); i <= x; i++){
                             hMatchMap[i][y] = currentColor;
                         }
-                    }if(match > 3){
+                    }if(match > 2){
                         hMatchMap[x][y] = currentColor;
                     }
                 }
-                lastColor = 10;
-                match = 1;
+                lastColor = 0;
+                match = 0;
             }
 
             // CHECK MATCHES VERTICALLY
             for(int x = 0; x < _cols; x++) {
                 for(int y = 0; y < _rows; y++){
                     int currentColor = colorSnapShot[x][y];
-                    match = currentColor == lastColor ? match+1:1;
+                    match = currentColor == lastColor ? match+1:0;
                     lastColor = currentColor;
-                    if(match == 3){
+                    if(match == 2){
                         //match found collect all previous x values
                         for(int i = (y - 2); i <= y; i++){
                             vMatchMap[x][i] = currentColor;
                         }
-                    }if(match > 3){
+                    }if(match > 2){
                         vMatchMap[x][y] = currentColor;
                     }
                 }
-                lastColor = 10;
-                match = 1;
+                lastColor = 0;
+                match = 0;
             }
 
             int[][] mergedMatchMap = mergeMatchMaps(hMatchMap, vMatchMap);
