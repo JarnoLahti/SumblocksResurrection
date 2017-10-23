@@ -42,6 +42,10 @@ public class Block extends Actor{
         return _gridPos;
     }
 
+    public int getColorId(){
+        return _colorID;
+    }
+
     @Override
     public void draw(Batch batch, float parentAlpha) {
         super.draw(batch, parentAlpha);
@@ -59,7 +63,6 @@ public class Block extends Actor{
         if(getScaleX() == 0 || getScaleY() == 0){
             return;
         }
-
         batch.setShader(_fontShader);
         _font.getData().setScale(getScaleX());
         _textSize.setText(_font, Integer.toString(_value));
