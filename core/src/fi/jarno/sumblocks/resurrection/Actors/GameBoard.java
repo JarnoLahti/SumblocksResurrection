@@ -43,7 +43,7 @@ public class GameBoard extends Group{
     public void act(float delta) {
         if(!moveChecked && !childrenActionsRunning()){
             //check for matches
-            int[][] colorSnapShot = getColorArraySnapshot();
+            int[][] colorSnapshot = getColorArraySnapshot();
 
             int match = 0;
             int lastColor = 0;
@@ -54,7 +54,7 @@ public class GameBoard extends Group{
             // CHECK MATCHES HORIZONTIALLY
             for(int y = 0; y < _rows; y++){
                 for(int x = 0; x < _cols; x++) {
-                    int currentColor = colorSnapShot[x][y];
+                    int currentColor = colorSnapshot[x][y];
                     match = currentColor == lastColor ? match+1:0;
                     lastColor = currentColor;
                     if(match == 2){
@@ -73,7 +73,7 @@ public class GameBoard extends Group{
             // CHECK MATCHES VERTICALLY
             for(int x = 0; x < _cols; x++) {
                 for(int y = 0; y < _rows; y++){
-                    int currentColor = colorSnapShot[x][y];
+                    int currentColor = colorSnapshot[x][y];
                     match = currentColor == lastColor ? match+1:0;
                     lastColor = currentColor;
                     if(match == 2){
