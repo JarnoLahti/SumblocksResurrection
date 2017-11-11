@@ -10,9 +10,12 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import fi.jarno.sumblocks.resurrection.Resources.BlockActions;
+import fi.jarno.sumblocks.resurrection.Resources.MatchGroup;
+import fi.jarno.sumblocks.resurrection.Resources.MergeMetadata;
 import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
 
 /**
@@ -21,13 +24,14 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
 
 public class GameBoard extends Group{
     private final int BLOCK_OFFSET = 3;
-
     private float _boardWidth;
     private float _boardHeight;
     private int _cols;
     private int _rows;
     private float _blockWidth;
     private float _blockHeight;
+    private BitmapFont font;
+    private ShaderProgram fontShader;
 
     private Vector2 _touch = new Vector2();
     private Vector2 _drag = new Vector2();
@@ -35,74 +39,173 @@ public class GameBoard extends Group{
     private Vector2 _srcGridPos = new Vector2();
     private Vector2 _dstGridPos = new Vector2();
 
+    private Vector2[][] _blockPositions;
+
     private Block _destination, _source;
 
     boolean moveChecked = true;
+    boolean blocksNeedToDrop = false;
+    boolean repopulateChecked = true;
+    ArrayList<Vector2> mergeBlockPositions = new ArrayList();
+
+    public GameBoard(int posX, int posY, int width, int height, int cols, int rows){
+        super();
+        _cols = cols;
+        _rows = rows;
+        _boardWidth = width;
+        _boardHeight = height;
+        _blockWidth = _boardWidth / _cols;
+        _blockHeight = _boardHeight / _rows;
+        _blockPositions = new Vector2[_cols][_rows];
+        font = initBlockFont();
+        fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
+        if (!fontShader.isCompiled()) {
+            Gdx.app.error("fontShader", "compilation failed:\n" + fontShader.getLog());
+        }
+        setBounds(posX, posY, width, height);
+        setOrigin(width / 2, height / 2);
+        initBoard();
+    }
 
     @Override
     public void act(float delta) {
-        if(!moveChecked && !childrenActionsRunning()){
+        if(!moveChecked && !childActionsRunning()){
+            mergeBlockPositions.clear();
             //check for matches
-            int[][] colorSnapshot = getColorArraySnapshot();
-
-            int match = 0;
-            int lastColor = 0;
-
-            int[][] hMatchMap = new int[_cols][_rows];
-            int[][] vMatchMap = new int[_cols][_rows];
-
-            // CHECK MATCHES HORIZONTIALLY
-            for(int y = 0; y < _rows; y++){
-                for(int x = 0; x < _cols; x++) {
-                    int currentColor = colorSnapshot[x][y];
-                    match = currentColor == lastColor ? match+1:0;
-                    lastColor = currentColor;
-                    if(match == 2){
-                       //match found collect all previous x values
-                        for(int i = (x - 2); i <= x; i++){
-                            hMatchMap[i][y] = currentColor;
-                        }
-                    }if(match > 2){
-                        hMatchMap[x][y] = currentColor;
-                    }
-                }
-                lastColor = 0;
-                match = 0;
-            }
-
-            // CHECK MATCHES VERTICALLY
-            for(int x = 0; x < _cols; x++) {
-                for(int y = 0; y < _rows; y++){
-                    int currentColor = colorSnapshot[x][y];
-                    match = currentColor == lastColor ? match+1:0;
-                    lastColor = currentColor;
-                    if(match == 2){
-                        //match found collect all previous x values
-                        for(int i = (y - 2); i <= y; i++){
-                            vMatchMap[x][i] = currentColor;
-                        }
-                    }if(match > 2){
-                        vMatchMap[x][y] = currentColor;
-                    }
-                }
-                lastColor = 0;
-                match = 0;
-            }
-
-            int[][] mergedMatchMap = mergeMatchMaps(hMatchMap, vMatchMap);
+            int[][] mergedMatchMap = getColorMatchMap(getColorArraySnapshot());
 
             if(!hasMatches(mergedMatchMap)){
                 swapBlockSpots(_source, _destination);
+                blocksNeedToDrop = false;
+            }else{
+                mergeBlockPositions.add(_source.getGridPos());
+                mergeBlockPositions.add(_destination.getGridPos());
+                mergeBlocks(getMatchGroups(mergeBlockPositions));
+                blocksNeedToDrop = true;
             }
-
-            // FIND A WAY TO CHECK CONNECTED MATCHES AND DECIDE THE BLOCK WHICH WILL GET ALL OTHER BLOCKS MERGED
-            // CORNER BLOCK SHOULD ALWAYS BE THE ONE WHICH MERGES BECAUSE IT CAN ONLY HAPPEN BY USER INTERACTION
-
+            _source = null;
+            _destination = null;
             moveChecked = true;
         }
-        //repopulate
-        //check repopulate
+
+        if(blocksNeedToDrop && !childActionsRunning()){
+            mergeBlockPositions.clear();
+
+            float dropDelay = 0;
+            float spawnDelay = 0;
+
+            Block[][] blocks = getBlockArraySnapshot();
+
+            int drop = 0;
+            Block blc = null;
+
+            for(int x = 0; x < _cols; x++){
+
+                //drop blocks
+                for(int y = _rows - 1; y >= 0; y--){
+                    blc = blocks[x][y];
+                    if(blc == null){
+                        drop++;
+                    }else if(drop > 0){
+                        dropBlock(blc, y + drop, dropDelay);
+                        mergeBlockPositions.add(blc.getGridPos());
+                        dropDelay += BlockActions.BLOCK_DROP_DELAY;
+                    }
+                }
+
+                //spawn new blocks
+                for(int i = drop - 1; i >= 0; i--){
+                    Vector2 pos = _blockPositions[x][0];
+                    mergeBlockPositions.add(new Vector2(x, i));
+                    Block block = new Block(
+                            pos.x,
+                            pos.y - _blockHeight - BLOCK_OFFSET,
+                            _blockWidth - BLOCK_OFFSET,
+                            _blockHeight - BLOCK_OFFSET,
+                            x,
+                            i,
+                            randomizeBlockColor(),
+                            font,
+                            fontShader);
+                    block.setScale(0);
+                    block.setZIndex(i);
+                    this.addActor(block);
+                    spawnBlock(block, i, spawnDelay);
+                    spawnDelay += BlockActions.BLOCK_SPAWN_DELAY;
+                }
+                spawnDelay = 0;
+                dropDelay = 0;
+                drop = 0;
+            }
+            blocksNeedToDrop = false;
+            repopulateChecked = false;
+        }
+
+        if(!repopulateChecked && !childActionsRunning()){
+            int[][] mergedMatchMap = getColorMatchMap(getColorArraySnapshot());
+
+            if(!hasMatches(mergedMatchMap)){
+                repopulateChecked = true;
+                blocksNeedToDrop = false;
+            }else{
+                mergeBlocks(getMatchGroups(mergeBlockPositions));
+                blocksNeedToDrop = true;
+            }
+        }
+
         super.act(delta);
+    }
+
+    private int[][] getColorMatchMap(int[][] colorSnapshot) {
+        int[][] hMatchMap = new int[_cols][_rows];
+        int[][] vMatchMap = new int[_cols][_rows];
+
+        int match = 0;
+        int lastColor = 0;
+
+        // CHECK MATCHES HORIZONTIALLY
+        for(int y = 0; y < _rows; y++){
+            for(int x = 0; x < _cols; x++) {
+                int currentColor = colorSnapshot[x][y];
+                match = currentColor == lastColor ? match+1:0;
+                lastColor = currentColor;
+                if(match == 2){
+                    //match found collect all previous x values
+                    for(int i = (x - 2); i <= x; i++){
+                        if(i >= 0) {
+                            hMatchMap[i][y] = currentColor;
+                        }
+                    }
+                }if(match > 2){
+                    hMatchMap[x][y] = currentColor;
+                }
+            }
+            lastColor = 0;
+            match = 0;
+        }
+
+        // CHECK MATCHES VERTICALLY
+        for(int x = 0; x < _cols; x++) {
+            for(int y = 0; y < _rows; y++){
+                int currentColor = colorSnapshot[x][y];
+                match = currentColor == lastColor ? match+1:0;
+                lastColor = currentColor;
+                if(match == 2){
+                    //match found collect all previous x values
+                    for(int i = (y - 2); i <= y; i++){
+                        if(i >= 0) {
+                            vMatchMap[x][i] = currentColor;
+                        }
+                    }
+                }if(match > 2){
+                    vMatchMap[x][y] = currentColor;
+                }
+            }
+            lastColor = 0;
+            match = 0;
+        }
+
+        return mergeColorMatchMaps(hMatchMap, vMatchMap);
     }
 
     private boolean hasMatches(int[][] mergedMatchMap) {
@@ -116,7 +219,7 @@ public class GameBoard extends Group{
         return false;
     }
 
-    private int[][] mergeMatchMaps(int[][] a, int[][] b) {
+    private int[][] mergeColorMatchMaps(int[][] a, int[][] b) {
         for(int y = 0; y < _rows; y++) {
             for(int x = 0; x < _cols; x++) {
                 if(a[x][y] == 0 && b[x][y] > 0){
@@ -141,26 +244,27 @@ public class GameBoard extends Group{
         return blockColors;
     }
 
-    private boolean childrenActionsRunning() {
+    private Block[][] getBlockArraySnapshot() {
+        Block[][] blocks = new Block[_cols][_rows];
+        Block b;
+        Vector2 gridPos;
+        for (Actor a:getChildren()) {
+            if(a instanceof Block){
+                b = (Block)a;
+                gridPos = b.getGridPos();
+                blocks[(int)gridPos.x][(int)gridPos.y] = b;
+            }
+        }
+        return blocks;
+    }
+
+    private boolean childActionsRunning() {
         for (Actor a:getChildren()) {
             if(a.hasActions()){
                 return true;
             }
         }
         return false;
-    }
-
-    public GameBoard(int posX, int posY, int width, int height, int cols, int rows){
-        super();
-        _cols = cols;
-        _rows = rows;
-        _boardWidth = width;
-        _boardHeight = height;
-        _blockWidth = _boardWidth / _cols;
-        _blockHeight = _boardHeight / _rows;
-        setBounds(posX, posY, width, height);
-        setOrigin(width / 2, height / 2);
-        initBoard();
     }
 
     private BitmapFont initBlockFont() {
@@ -173,11 +277,7 @@ public class GameBoard extends Group{
 
     private void initBoard(){
         getChildren().clear();
-        BitmapFont font = initBlockFont();
-        ShaderProgram fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
-        if (!fontShader.isCompiled()) {
-            Gdx.app.error("fontShader", "compilation failed:\n" + fontShader.getLog());
-        }
+
 
         int[][] colorMap = initializeColorMap();
 
@@ -185,9 +285,12 @@ public class GameBoard extends Group{
         float initDelay = 0;
         for(int y = 0; y < _rows; y++){
             for(int x = 0; x < _cols; x++) {
+                float blockX = (x * _blockWidth) + BLOCK_OFFSET;
+                float blockY = (y * _blockHeight) + BLOCK_OFFSET;
+
                 Block block = new Block(
-                        (x * _blockWidth) + BLOCK_OFFSET,
-                        (y * _blockHeight) + BLOCK_OFFSET,
+                        blockX,
+                        blockY,
                         _blockWidth - BLOCK_OFFSET,
                         _blockHeight - BLOCK_OFFSET,
                         x,
@@ -197,8 +300,9 @@ public class GameBoard extends Group{
                         fontShader);
                 block.setScale(0);
                 this.addActor(block);
-                block.addAction(BlockActions.blockInit(initDelay));
+                block.addAction(BlockActions.init(initDelay));
                 initDelay += BlockActions.BLOCK_INIT_DELAY;
+                _blockPositions[x][y] = new Vector2(blockX, blockY);
             }
         }
     }
@@ -209,49 +313,13 @@ public class GameBoard extends Group{
         int[][] colorMap = new int[_cols][_rows];
 
         do{
-            noMatches = true;
-
             for(int y = 0; y < _rows; y++){
                 for(int x = 0; x < _cols; x++) {
                     colorMap[x][y] = randomizeBlockColor();
                 }
             }
 
-            int match = 1;
-            int lastColor = 10;
-
-            // CHECK MATCHES HORIZONTIALLY
-            for(int y = 0; y < _rows; y++){
-                for(int x = 0; x < _cols; x++) {
-                    int currentColor = colorMap[x][y];
-                    match = currentColor == lastColor ? match+1:1;
-                    lastColor = currentColor;
-                    if(match > 2){
-                        noMatches = false;
-                    }
-                }
-                lastColor = 10;
-                match = 1;
-            }
-
-            if(!noMatches){
-                continue; // if we already got a match, no need to check vertically
-            }
-
-            // CHECK MATCHES VERTICALLY
-            for(int x = 0; x < _cols; x++) {
-                for(int y = 0; y < _rows; y++){
-                    int currentColor = colorMap[x][y];
-                    match = currentColor == lastColor ? match+1:1;
-                    lastColor = currentColor;
-                    if(match > 2){
-                        noMatches = false;
-                    }
-                }
-                lastColor = 10;
-                match = 1;
-            }
-
+            noMatches = !hasMatches(getColorMatchMap(colorMap));
         }while(!noMatches);
 
         return colorMap;
@@ -326,8 +394,24 @@ public class GameBoard extends Group{
         source.setGridPos(_dstGridPos);
         destination.setGridPos(_srcGridPos);
 
-        source.addAction(BlockActions.blockOverSwap(destination));
-        destination.addAction(BlockActions.blockUnderSwap(source));
+        source.addAction(BlockActions.overSwap(destination));
+        destination.addAction(BlockActions.underSwap(source));
+    }
+
+    private void dropBlock(Block block, int gridY, float delay){
+        if(block == null){
+            return;
+        }
+        block.setGridY(gridY);
+        block.addAction(BlockActions.drop(_blockPositions[(int)block.getGridPos().x][gridY], delay));
+    }
+
+    private void spawnBlock(Block block, int gridY, float delay){
+        if(block == null){
+            return;
+        }
+        block.setGridY(gridY);
+        block.addAction(BlockActions.spawn(_blockPositions[(int)block.getGridPos().x][gridY], delay));
     }
 
     public InputAdapter getInputAdapter(){
@@ -348,7 +432,7 @@ public class GameBoard extends Group{
 
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-                if(_drag.isZero()){
+                if(_drag.isZero() || childActionsRunning()){
                     return true;
                 }
 
@@ -367,5 +451,132 @@ public class GameBoard extends Group{
                 return true;
             }
         };
+    }
+
+    private ArrayList<MatchGroup> getMatchGroups(ArrayList<Vector2> mergeBlockPositions) {
+        int[][] colorSnapshot = getColorArraySnapshot();
+        int lastColor = 0;
+        int match = 0;
+        ArrayList<MatchGroup> hMatchGroups = new ArrayList();
+        ArrayList<MatchGroup> vMatchGroups = new ArrayList();
+
+        // CHECK MATCHES HORIZONTIALLY
+        for(int y = 0; y < _rows; y++){
+            for(int x = 0; x < _cols; x++) {
+                int currentColor = colorSnapshot[x][y];
+                match = currentColor == lastColor ? match+1:0;
+                lastColor = currentColor;
+                if(match == 2){
+                    hMatchGroups.add(new MatchGroup(lastColor));
+                    //match found collect all previous x values
+                    for(int i = (x - 2); i <= x; i++){
+                        if(i >= 0) {
+                            hMatchGroups.get(hMatchGroups.size() - 1).addMetadata(new MergeMetadata(i, y));
+                        }
+                    }
+                }if(match > 2){
+                    hMatchGroups.get(hMatchGroups.size() - 1).addMetadata(new MergeMetadata(x, y));
+                }
+            }
+            lastColor = 0;
+            match = 0;
+        }
+
+        // CHECK MATCHES VERTICALLY
+        for(int x = 0; x < _cols; x++) {
+            for(int y = 0; y < _rows; y++){
+                int currentColor = colorSnapshot[x][y];
+                match = currentColor == lastColor ? match+1:0;
+                lastColor = currentColor;
+                if(match == 2){
+                    vMatchGroups.add(new MatchGroup(lastColor));
+                    //match found collect all previous x values
+                    for(int i = (y - 2); i <= y; i++){
+                        if(i >= 0) {
+                            vMatchGroups.get(vMatchGroups.size() - 1).addMetadata(new MergeMetadata(x, i));
+                        }
+                    }
+                }if(match > 2){
+                    vMatchGroups.get(vMatchGroups.size() - 1).addMetadata(new MergeMetadata(x, y));
+                }
+            }
+            lastColor = 0;
+            match = 0;
+        }
+
+        ArrayList<MatchGroup> matchGroups = combineMatchGroups(hMatchGroups, vMatchGroups);
+
+        for (Vector2 mbp:mergeBlockPositions) {
+            for (MatchGroup mg:matchGroups) {
+                mg.setMergeBlock((int)mbp.x, (int)mbp.y);
+            }
+        }
+
+        return matchGroups;
+    }
+
+    private ArrayList<MatchGroup> combineMatchGroups(ArrayList<MatchGroup> hMatchGroups, ArrayList<MatchGroup> vMatchGroups) {
+        boolean connectingGroupFound;
+
+        ArrayList<MatchGroup> notConnectingGroups = new ArrayList();
+
+        if(hMatchGroups.isEmpty()){
+            return vMatchGroups;
+        }
+
+        for (MatchGroup hmg : hMatchGroups) {
+            for (MatchGroup vmg: vMatchGroups) {
+                connectingGroupFound = false;
+                int i = 0;
+                int removeIdx = 0;
+                for (MergeMetadata md : vmg.getMetadata()) {
+                    if(hmg.overlaps(vmg.getColor(), md.x, md.y)){
+                        connectingGroupFound = true;
+                        hmg.setMergeBlock(md.x, md.y);
+                        removeIdx = i;
+                    }
+                    i++;
+                }
+
+                if(connectingGroupFound){
+                    vmg.getMetadata().remove(removeIdx);
+                    hmg.addMergeGroup(vmg);
+                }else{
+                    notConnectingGroups.add(vmg);
+                }
+            }
+        }
+
+        for (MatchGroup g: notConnectingGroups) {
+            hMatchGroups.add(g);
+        }
+
+        return hMatchGroups;
+    }
+
+    private void mergeBlocks(ArrayList<MatchGroup> matchGroups){
+        Block[][] blocks = getBlockArraySnapshot();
+        float mergeDelayX = 0;
+        float mergeDelayY = 0;
+        for (MatchGroup mg : matchGroups) {
+            MergeMetadata mergeBlock = mg.getMergeBlock();
+            Block merge = blocks[mergeBlock.x][mergeBlock.y];
+            merge.setZIndex(2);
+            ArrayList<MergeMetadata> mergingBlocks = mg.getNonMergeBlocks();
+
+            for (MergeMetadata merging:mergingBlocks) {
+                Block b = blocks[merging.x][merging.y];
+                merge.addToValue(b.getValue());
+                b.setZIndex(0);
+                if(mergeBlock.x == merging.x){
+                    b.addAction(BlockActions.merge(b, merge.getX(), merge.getY(), mergeDelayY));
+                    mergeDelayY += BlockActions.BLOCK_MERGE_DELAY;
+                }else{
+                    b.addAction(BlockActions.merge(b, merge.getX(), merge.getY(), mergeDelayX));
+                    mergeDelayX += BlockActions.BLOCK_MERGE_DELAY;
+                }
+
+            }
+        }
     }
 }
