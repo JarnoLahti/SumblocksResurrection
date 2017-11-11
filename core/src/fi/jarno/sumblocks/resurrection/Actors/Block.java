@@ -74,12 +74,7 @@ public class Block extends Actor{
         _gridPos.set(newPos);
     }
 
-    public void setGridX(float x){
-        _gridPos.set(x, _gridPos.y);
-    }
-
     public void setGridY(float y){ _gridPos.set(_gridPos.x, y); }
-
 
     public int getValue(){
         return _value;
