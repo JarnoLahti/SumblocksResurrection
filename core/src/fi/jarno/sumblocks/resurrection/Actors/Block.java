@@ -33,7 +33,7 @@ public class Block extends Actor{
         updateColor(colorID);
         _gridPos = new Vector2(column, row);
         _font = font;
-        _value = colorID * 10;
+        _value = 1;
         setZIndex(1);
         _fontShader = fontShader;
     }
@@ -74,6 +74,21 @@ public class Block extends Actor{
         _gridPos.set(newPos);
     }
 
+    public void setGridX(float x){
+        _gridPos.set(x, _gridPos.y);
+    }
+
+    public void setGridY(float y){ _gridPos.set(_gridPos.x, y); }
+
+
+    public int getValue(){
+        return _value;
+    }
+
+    public void addToValue(int value){
+        _value += value;
+    }
+
     private void updateColor(int colorID){
         switch (colorID){
             case BlockColors.RED_ID:
@@ -95,5 +110,11 @@ public class Block extends Actor{
                 return;
         }
         _colorID = colorID;
+    }
+
+    public void dispose(){
+        _font = null;
+        _fontShader = null;
+        _color = null;
     }
 }
