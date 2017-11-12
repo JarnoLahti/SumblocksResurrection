@@ -47,6 +47,7 @@ public class GameBoard extends Group{
     boolean blocksNeedToDrop = false;
     boolean repopulateChecked = true;
     ArrayList<Vector2> mergeBlockPositions = new ArrayList();
+    Texture blockTexture;
 
     public GameBoard(int posX, int posY, int width, int height, int cols, int rows){
         super();
@@ -57,6 +58,7 @@ public class GameBoard extends Group{
         _blockWidth = _boardWidth / _cols;
         _blockHeight = _boardHeight / _rows;
         _blockPositions = new Vector2[_cols][_rows];
+        blockTexture = new Texture(Gdx.files.internal("textures/block_gray.png"));
         font = initBlockFont();
         fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
         if (!fontShader.isCompiled()) {
@@ -126,7 +128,8 @@ public class GameBoard extends Group{
                             i,
                             randomizeBlockColor(),
                             font,
-                            fontShader);
+                            fontShader,
+                            blockTexture);
                     block.setScale(0);
                     block.setZIndex(i);
                     this.addActor(block);
@@ -297,7 +300,8 @@ public class GameBoard extends Group{
                         y,
                         colorMap[x][y],
                         font,
-                        fontShader);
+                        fontShader,
+                        blockTexture);
                 block.setScale(0);
                 this.addActor(block);
                 block.addAction(BlockActions.init(initDelay));

@@ -1,11 +1,12 @@
 package fi.jarno.sumblocks.resurrection.Actors;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
@@ -16,20 +17,24 @@ import fi.jarno.sumblocks.resurrection.Resources.BlockColors;
  */
 
 public class Block extends Actor{
-    private ShapeRenderer _sh = new ShapeRenderer();
     private Color _color = new Color();
     private GlyphLayout _textSize = new GlyphLayout();
 
     private Vector2 _gridPos;
-    private int _colorID;
     private BitmapFont _font;
-    private int _value = 0;
     private ShaderProgram _fontShader;
 
-    public Block(float x, float y, float width, float height, int column, int row, int colorID, BitmapFont font, ShaderProgram fontShader){
+    private int _value;
+    private int _colorID;
+
+    private Sprite _sprite;
+
+    public Block(float x, float y, float width, float height, int column, int row, int colorID, BitmapFont font, ShaderProgram fontShader, Texture texture){
         super();
+        _sprite = new Sprite(texture);
         setBounds(x, y, width, height);
         setOrigin(width / 2, height / 2);
+        _sprite.setOrigin(getOriginX(), getOriginY());
         updateColor(colorID);
         _gridPos = new Vector2(column, row);
         _font = font;
@@ -48,18 +53,7 @@ public class Block extends Actor{
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        super.draw(batch, parentAlpha);
-        batch.end();
-
-        _sh.setProjectionMatrix(batch.getProjectionMatrix());
-        _sh.setTransformMatrix(batch.getTransformMatrix());
-
-        _sh.begin(ShapeRenderer.ShapeType.Filled);
-        _sh.setColor(_color);
-        _sh.rect(getX(), getY(), getOriginX(), getOriginY(), getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation());
-        _sh.end();
-
-        batch.begin();
+        _sprite.draw(batch);
         if(getScaleX() == 0 || getScaleY() == 0){
             return;
         }
@@ -105,6 +99,31 @@ public class Block extends Actor{
                 return;
         }
         _colorID = colorID;
+        _sprite.setColor(_color.r, _color.g, _color.b, 1);
+    }
+
+    @Override
+    public void act(float delta) {
+        _sprite.setScale(getScaleX(), getScaleY());
+        super.act(delta);
+    }
+
+    @Override
+    protected void positionChanged() {
+        _sprite.setPosition(getX(), getY());
+        super.positionChanged();
+    }
+
+    @Override
+    protected void rotationChanged() {
+        _sprite.setRotation(getRotation());
+        super.rotationChanged();
+    }
+
+    @Override
+    protected void sizeChanged() {
+        _sprite.setSize(getWidth(), getHeight());
+        super.sizeChanged();
     }
 
     public void dispose(){
@@ -112,4 +131,6 @@ public class Block extends Actor{
         _fontShader = null;
         _color = null;
     }
+
+
 }
