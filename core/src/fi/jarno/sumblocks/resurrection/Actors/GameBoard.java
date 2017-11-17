@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.utils.Sort;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -22,7 +23,7 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
  * Created by Jarno on 04-Jul-17.
  */
 
-public class GameBoard extends Group{
+public class GameBoard extends DepthGroup{
     private final int BLOCK_OFFSET = 3;
     private float _boardWidth;
     private float _boardHeight;
@@ -41,7 +42,7 @@ public class GameBoard extends Group{
 
     private Vector2[][] _blockPositions;
 
-    private Block _destination, _source;
+    private GameBlock _destination, _source;
 
     boolean moveChecked = true;
     boolean blocksNeedToDrop = false;
@@ -96,10 +97,10 @@ public class GameBoard extends Group{
             float dropDelay = 0;
             float spawnDelay = 0;
 
-            Block[][] blocks = getBlockArraySnapshot();
+            GameBlock[][] blocks = getBlockArraySnapshot();
 
             int drop = 0;
-            Block blc = null;
+            GameBlock blc = null;
 
             for(int x = 0; x < _cols; x++){
 
@@ -119,9 +120,9 @@ public class GameBoard extends Group{
                 for(int i = drop - 1; i >= 0; i--){
                     Vector2 pos = _blockPositions[x][0];
                     mergeBlockPositions.add(new Vector2(x, i));
-                    Block block = new Block(
+                    GameBlock block = new GameBlock(
                             pos.x,
-                            pos.y - _blockHeight - BLOCK_OFFSET,
+                            pos.y,
                             _blockWidth - BLOCK_OFFSET,
                             _blockHeight - BLOCK_OFFSET,
                             x,
@@ -130,9 +131,9 @@ public class GameBoard extends Group{
                             font,
                             fontShader,
                             blockTexture);
+                    this.addActor(block);
                     block.setScale(0);
                     block.setZIndex(i);
-                    this.addActor(block);
                     spawnBlock(block, i, spawnDelay);
                     spawnDelay += BlockActions.BLOCK_SPAWN_DELAY;
                 }
@@ -140,6 +141,7 @@ public class GameBoard extends Group{
                 dropDelay = 0;
                 drop = 0;
             }
+            Sort.instance().sort(getChildren());
             blocksNeedToDrop = false;
             repopulateChecked = false;
         }
@@ -235,11 +237,11 @@ public class GameBoard extends Group{
 
     private int[][] getColorArraySnapshot() {
         int[][] blockColors = new int[_cols][_rows];
-        Block b;
+        GameBlock b;
         Vector2 gridPos;
         for (Actor a:getChildren()) {
-            if(a instanceof Block){
-                b = (Block)a;
+            if(a instanceof GameBlock){
+                b = (GameBlock)a;
                 gridPos = b.getGridPos();
                 blockColors[(int)gridPos.x][(int)gridPos.y] = b.getColorId();
             }
@@ -247,13 +249,13 @@ public class GameBoard extends Group{
         return blockColors;
     }
 
-    private Block[][] getBlockArraySnapshot() {
-        Block[][] blocks = new Block[_cols][_rows];
-        Block b;
+    private GameBlock[][] getBlockArraySnapshot() {
+        GameBlock[][] blocks = new GameBlock[_cols][_rows];
+        GameBlock b;
         Vector2 gridPos;
         for (Actor a:getChildren()) {
-            if(a instanceof Block){
-                b = (Block)a;
+            if(a instanceof GameBlock){
+                b = (GameBlock)a;
                 gridPos = b.getGridPos();
                 blocks[(int)gridPos.x][(int)gridPos.y] = b;
             }
@@ -291,7 +293,7 @@ public class GameBoard extends Group{
                 float blockX = (x * _blockWidth) + BLOCK_OFFSET;
                 float blockY = (y * _blockHeight) + BLOCK_OFFSET;
 
-                Block block = new Block(
+                GameBlock block = new GameBlock(
                         blockX,
                         blockY,
                         _blockWidth - BLOCK_OFFSET,
@@ -329,18 +331,18 @@ public class GameBoard extends Group{
         return colorMap;
     }
 
-    private int randomizeBlockColor(){
+    public int randomizeBlockColor(){
         return new Random().nextInt(5) + 1;
     }
 
     private void handleInput(final Vector2 touchPos, final SwipeDirection direction){
         Actor a = hit(touchPos.x, touchPos.y, false);
 
-        if(!(a instanceof Block)){
+        if(!(a instanceof GameBlock)){
             return;
         }
 
-        _source = (Block)a;
+        _source = (GameBlock)a;
 
         if(_source == null) {
             return;
@@ -372,10 +374,10 @@ public class GameBoard extends Group{
         }
     }
 
-    private Block getBlockFromGridPos(int col, int row){
+    private GameBlock getBlockFromGridPos(int col, int row){
         for(Actor a : getChildren()){
-            if(a instanceof Block){
-                _destination = (Block)a;
+            if(a instanceof GameBlock){
+                _destination = (GameBlock)a;
                 if(_destination.getGridPos().x == col && _destination.getGridPos().y == row){
                     return _destination;
                 }
@@ -384,8 +386,8 @@ public class GameBoard extends Group{
         return null;
     }
 
-    private void swapBlockSpots(final Block source, final Block destination){
-        if(source == null && destination == null){
+    private void swapBlockSpots(final GameBlock source, final GameBlock destination){
+        if(source == null || destination == null){
             return;
         }
 
@@ -402,7 +404,7 @@ public class GameBoard extends Group{
         destination.addAction(BlockActions.underSwap(source));
     }
 
-    private void dropBlock(Block block, int gridY, float delay){
+    private void dropBlock(GameBlock block, int gridY, float delay){
         if(block == null){
             return;
         }
@@ -410,7 +412,7 @@ public class GameBoard extends Group{
         block.addAction(BlockActions.drop(_blockPositions[(int)block.getGridPos().x][gridY], delay));
     }
 
-    private void spawnBlock(Block block, int gridY, float delay){
+    private void spawnBlock(GameBlock block, int gridY, float delay){
         if(block == null){
             return;
         }
@@ -559,17 +561,17 @@ public class GameBoard extends Group{
     }
 
     private void mergeBlocks(ArrayList<MatchGroup> matchGroups){
-        Block[][] blocks = getBlockArraySnapshot();
+        GameBlock[][] blocks = getBlockArraySnapshot();
         float mergeDelayX = 0;
         float mergeDelayY = 0;
         for (MatchGroup mg : matchGroups) {
             MergeMetadata mergeBlock = mg.getMergeBlock();
-            Block merge = blocks[mergeBlock.x][mergeBlock.y];
+            GameBlock merge = blocks[mergeBlock.x][mergeBlock.y];
             merge.setZIndex(2);
             ArrayList<MergeMetadata> mergingBlocks = mg.getNonMergeBlocks();
 
             for (MergeMetadata merging:mergingBlocks) {
-                Block b = blocks[merging.x][merging.y];
+                GameBlock b = blocks[merging.x][merging.y];
                 merge.addToValue(b.getValue());
                 b.setZIndex(0);
                 if(mergeBlock.x == merging.x){
