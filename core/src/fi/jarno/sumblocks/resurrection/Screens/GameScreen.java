@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import fi.jarno.sumblocks.resurrection.Actors.Background;
 import fi.jarno.sumblocks.resurrection.Actors.GameBoard;
+import fi.jarno.sumblocks.resurrection.Actors.GameScore;
 import fi.jarno.sumblocks.resurrection.Globals;
 import fi.jarno.sumblocks.resurrection.Resources.GameCamera;
 
@@ -20,6 +21,7 @@ public class GameScreen extends Stage implements Screen {
     private GameCamera _camera;
     private Background _background;
     private GameBoard _board;
+    private GameScore _gameScore;
 
     @Override
     public void show() {
@@ -36,11 +38,14 @@ public class GameScreen extends Stage implements Screen {
                 Globals.GAME_BOARD_ROWS);
         addActor(_board);
 
+        _gameScore = new GameScore((Globals.VIRTUAL_WIDTH / 2) - (Globals.GAME_SCORE_WIDTH / 2), Globals.GAME_SCORE_Y, Globals.GAME_SCORE_WIDTH, Globals.GAME_SCORE_HEIGHT);
+        addActor(_gameScore);
         _background = new Background(0,0, Globals.VIRTUAL_WIDTH, Globals.VIRTUAL_HEIGHT, getActors());
         addActor(_background);
 
         _background.setZIndex(0);
-        _board.setZIndex(1);
+        _gameScore.setZIndex(1);
+        _board.setZIndex(2);
 
         Sort.instance().sort(getActors());
 
@@ -51,6 +56,10 @@ public class GameScreen extends Stage implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor((48 / 255f), (48 / 255f), (48 / 255f), 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        if(_board.getUpdateScore()){
+            _gameScore.updateScore(_board.getScore());
+            _board.setUpdateScore(false);
+        }
 
         getViewport().apply(false);
         getBatch().setProjectionMatrix(getCamera().combined);

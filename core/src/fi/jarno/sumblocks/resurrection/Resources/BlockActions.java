@@ -18,7 +18,7 @@ public class BlockActions {
     public static final float BLOCK_MERGE_DELAY = .01f;
     public static final float BLOCK_DROP_DELAY = .035f;
 
-    private static final float BLOCK_SPAWN_TIME = .3f;
+    private static final float BLOCK_SPAWN_TIME = .2f;
 
 
     private static final float BLOCK_INIT_OVERSCALE_TIME = .15f;
