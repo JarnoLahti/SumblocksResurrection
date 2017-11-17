@@ -49,6 +49,7 @@ public class GameBoard extends DepthGroup{
     boolean repopulateChecked = true;
     ArrayList<Vector2> mergeBlockPositions = new ArrayList();
     Texture blockTexture;
+    private boolean _updateScore = true;
 
     public GameBoard(int posX, int posY, int width, int height, int cols, int rows){
         super();
@@ -152,6 +153,7 @@ public class GameBoard extends DepthGroup{
             if(!hasMatches(mergedMatchMap)){
                 repopulateChecked = true;
                 blocksNeedToDrop = false;
+                _updateScore = true;
             }else{
                 mergeBlocks(getMatchGroups(mergeBlockPositions));
                 blocksNeedToDrop = true;
@@ -584,5 +586,25 @@ public class GameBoard extends DepthGroup{
 
             }
         }
+    }
+
+    public int getScore() {
+        int score = 0;
+
+        for (Actor a:getChildren()) {
+            if(a instanceof GameBlock){
+                score += ((GameBlock) a).getValue();
+            }
+        }
+
+        return score;
+    }
+
+    public boolean getUpdateScore() {
+        return _updateScore;
+    }
+
+    public void setUpdateScore(boolean updateScore){
+        _updateScore = updateScore;
     }
 }

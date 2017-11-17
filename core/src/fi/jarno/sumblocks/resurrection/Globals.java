@@ -12,4 +12,8 @@ public class Globals {
     public static final int GAME_BOARD_COLUMNS = 6;
     public static final int GAME_BOARD_ROWS = 10;
     public static final int GAME_BOARD_Y_OFFSET = 60;
+
+    public static final int GAME_SCORE_WIDTH = 160;
+    public static final int GAME_SCORE_HEIGHT = 60;
+    public static final int GAME_SCORE_Y = 60;
 }
