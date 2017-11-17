@@ -9,7 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.Group;
 
 public class DepthGroup extends Group implements Comparable<Actor> {
     @Override
-    public int compareTo(Actor g) {
-        return getZIndex() < g.getZIndex() ? -1 : (getZIndex() > g.getZIndex() ? 1 : 0);
+    public int compareTo(Actor a) {
+        return getZIndex() < a.getZIndex() ? -1 : (getZIndex() > a.getZIndex() ? 1 : 0);
     }
 }
