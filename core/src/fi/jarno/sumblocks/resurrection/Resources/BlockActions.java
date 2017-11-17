@@ -1,6 +1,7 @@
 package fi.jarno.sumblocks.resurrection.Resources;
 
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Action;
@@ -16,6 +17,8 @@ public class BlockActions {
     public static final float BLOCK_INIT_DELAY = .02f;
     public static final float BLOCK_MERGE_DELAY = .01f;
     public static final float BLOCK_DROP_DELAY = .035f;
+
+    private static final float BLOCK_SPAWN_TIME = .3f;
 
 
     private static final float BLOCK_INIT_OVERSCALE_TIME = .15f;
@@ -55,6 +58,12 @@ public class BlockActions {
     }
 
     public static Action spawn(Vector2 pos, float delay){
-        return Actions.delay(delay, Actions.sequence(init(0), drop(pos, 0f)));
+        return Actions.delay(delay, Actions.sequence(
+                Actions.scaleTo(1f, 1f, BLOCK_SPAWN_TIME)
+                , drop(pos, 0f)));
+    }
+
+    public static Action pulseColor(float delay, Color cToPulse, final Color cToReturn, final float time){
+        return Actions.delay(delay, Actions.sequence(Actions.color(cToPulse, time), Actions.color(cToReturn, time)));
     }
 }

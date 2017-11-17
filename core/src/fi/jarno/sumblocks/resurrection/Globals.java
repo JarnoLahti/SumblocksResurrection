@@ -11,4 +11,5 @@ public class Globals {
     public static final int GAME_BOARD_HEIGHT = 600;
     public static final int GAME_BOARD_COLUMNS = 6;
     public static final int GAME_BOARD_ROWS = 10;
+    public static final int GAME_BOARD_Y_OFFSET = 60;
 }
