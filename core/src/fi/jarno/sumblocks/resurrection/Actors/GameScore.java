@@ -19,8 +19,8 @@ public class GameScore extends DepthActor {
     private BitmapFont _font;
     private int _currentScore = 0;
     private int _targetScore = 0;
-
     private double lastUpdate;
+
     public GameScore(float posX, float posY, int width, int height){
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
