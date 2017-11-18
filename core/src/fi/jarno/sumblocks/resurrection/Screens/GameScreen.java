@@ -40,7 +40,12 @@ public class GameScreen extends Stage implements Screen {
 
         _gameScore = new GameScore((Globals.VIRTUAL_WIDTH / 2) - (Globals.GAME_SCORE_WIDTH / 2), Globals.GAME_SCORE_Y, Globals.GAME_SCORE_WIDTH, Globals.GAME_SCORE_HEIGHT);
         addActor(_gameScore);
-        _background = new Background(0,0, Globals.VIRTUAL_WIDTH, Globals.VIRTUAL_HEIGHT, getActors());
+        _background = new Background(
+                0,
+                0,
+                 Globals.BACKGROUND_WIDTH,
+                 Globals.BACKGROUND_HEIGHT,
+                 getActors());
         addActor(_background);
 
         _background.setZIndex(0);
