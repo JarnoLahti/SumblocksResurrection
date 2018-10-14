@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Action;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 
 import fi.jarno.sumblocks.resurrection.Actors.Block;
@@ -14,6 +15,8 @@ import fi.jarno.sumblocks.resurrection.Actors.Block;
  */
 
 public class BlockActions {
+
+    public static final float BACKGROUND_BLOCK_DELAY = .008f;
     public static final float BLOCK_INIT_DELAY = .02f;
     public static final float BLOCK_MERGE_DELAY = .01f;
     public static final float BLOCK_DROP_DELAY = .035f;
@@ -65,5 +68,23 @@ public class BlockActions {
 
     public static Action pulseColor(float delay, Color cToPulse, final Color cToReturn, final float time){
         return Actions.delay(delay, Actions.sequence(Actions.color(cToPulse, time), Actions.color(cToReturn, time)));
+    }
+
+    public static Action hideBlock(float delay, final Actor a){
+        return Actions.delay(delay, Actions.sequence(Actions.scaleTo(0.001f, 0.001f, .25f), Actions.run(new Runnable() {
+            @Override
+            public void run() {
+                a.setVisible(false);
+            }
+        })));
+    }
+
+    public static Action showBlock(float delay, final Actor a){
+        return Actions.delay(delay, Actions.sequence(Actions.scaleTo(1, 1, .25f), Actions.run(new Runnable() {
+            @Override
+            public void run() {
+                a.setVisible(true);
+            }
+        })));
     }
 }

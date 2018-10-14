@@ -1,4 +1,4 @@
-package fi.jarno.sumblocks.resurrection.Actors;
+package fi.jarno.sumblocks.resurrection.Actors.Game;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector2;
 
+import fi.jarno.sumblocks.resurrection.Actors.Block;
+import fi.jarno.sumblocks.resurrection.Resources.BlockActions;
 import fi.jarno.sumblocks.resurrection.Resources.BlockColors;
 
 /**
@@ -92,5 +94,11 @@ public class GameBlock extends Block {
     public void dispose(){
         _font = null;
         _fontShader = null;
+    }
+
+    @Override
+    public void initAnimation(float delay) {
+        super.initAnimation(delay);
+        addAction(BlockActions.init(delay));
     }
 }
