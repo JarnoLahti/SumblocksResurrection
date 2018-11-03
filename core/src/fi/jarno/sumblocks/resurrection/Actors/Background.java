@@ -35,7 +35,7 @@ public class Background extends Group {
         _random = new Random();
         _rows = height / BLOCK_SIZE;
         _cols = width / BLOCK_SIZE;
-        _texture = new Texture(Gdx.files.internal("textures/block_gray.9.png"));
+        _texture = new Texture(Gdx.files.internal("textures/block_gray.png"));
         _bgColor = new Color((66 / 255f), (66 / 255f), (66 / 255f), 1);
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);

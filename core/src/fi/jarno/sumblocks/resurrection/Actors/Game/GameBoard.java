@@ -60,7 +60,7 @@ public class GameBoard extends CustomGroup {
         _blockWidth = _boardWidth / _cols;
         _blockHeight = _boardHeight / _rows;
         _blockPositions = new Vector2[_cols][_rows];
-        blockTexture = new Texture(Gdx.files.internal("textures/block_gray.9.png"));
+        blockTexture = new Texture(Gdx.files.internal("textures/block_gray.png"));
         font = initBlockFont();
         fontShader = new ShaderProgram(Gdx.files.internal("shaders/font.vert"), Gdx.files.internal("shaders/font.frag"));
         if (!fontShader.isCompiled()) {
