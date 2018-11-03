@@ -20,11 +20,19 @@ public class SumblocksResurrection extends Game{
 
 	@Override
 	public void create() {
+
+		float physicalWidth = Gdx.graphics.getWidth();
+		float physicalHeight = Gdx.graphics.getHeight();
+
+		float physAspectRatio = physicalWidth / physicalHeight;
+
+		float arFix = physAspectRatio / 0.75f;
+
 		_bg = new Background(
 				0,
 				0,
-				Globals.BACKGROUND_WIDTH,
-				Globals.BACKGROUND_HEIGHT);
+				Math.round(Globals.BACKGROUND_WIDTH / arFix),
+				Math.round(Globals.BACKGROUND_HEIGHT / arFix));
 		ScreenStack.getInstance().PushScreen(new GameScreen());
 		_batch = new SpriteBatch();
 	}
