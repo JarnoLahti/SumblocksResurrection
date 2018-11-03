@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.utils.Array;
 
 import java.util.Random;
@@ -16,7 +17,7 @@ import fi.jarno.sumblocks.resurrection.Resources.BlockColors;
  * Created by Jarno on 16-Nov-17.
  */
 
-public class Background extends DepthGroup {
+public class Background extends Group {
     private final int BLOCK_SIZE = 20;
     private final int BLOCK_OFFSET = 3;
 
@@ -26,7 +27,11 @@ public class Background extends DepthGroup {
     private int _rows;
     private Random _random;
 
-    public Background(int posX, int posY, int width, int height, Array<Actor> actors){
+    float initTime;
+    double initStartTime;
+    boolean initDone = true;
+
+    public Background(int posX, int posY, int width, int height){
         _random = new Random();
         _rows = height / BLOCK_SIZE;
         _cols = width / BLOCK_SIZE;
@@ -34,7 +39,7 @@ public class Background extends DepthGroup {
         _bgColor = new Color((66 / 255f), (66 / 255f), (66 / 255f), 1);
         setBounds(posX, posY, width, height);
         setOrigin(width / 2, height / 2);
-        initBlocks(actors);
+        initBlocks();
     }
 
     @Override
@@ -82,27 +87,12 @@ public class Background extends DepthGroup {
         super.act(delta);
     }
 
-    private void initBlocks(Array<Actor> actors){
-        boolean init;
+    private void initBlocks(){
         for(int y = 0; y < _rows; y++){
             for(int x = 0; x < _cols; x++){
                 int bX = (x * BLOCK_SIZE) + BLOCK_OFFSET;
                 int bY = (y * BLOCK_SIZE) + BLOCK_OFFSET;
                 int bS = (BLOCK_SIZE - BLOCK_OFFSET);
-                init = true;
-
-                //check if block would be behind and actor
-                for (Actor a: actors){
-                    if(((a.getX() < (bX + bS)) && ((a.getX() + a.getWidth()) > bX)) && ((a.getY() < (bY + bS)) && ((a.getY() + a.getHeight()) > bY))){
-                        init = false;
-                    }
-                }
-
-                //if something is in front of the block, we do not want to create it
-                if(!init){
-                    continue;
-                }
-
                 addActor(new Block(bX, bY, bS, bS, _bgColor, _texture));
             }
         }
@@ -118,5 +108,36 @@ public class Background extends DepthGroup {
             }
         }
         return getChildren().size + 1;
+    }
+
+    public void updateTiles(Array<Actor> actors){
+        float hideDelay = 0;
+        float showDelay = 0;
+        for (Actor c:getChildren()) {
+            for (Actor a:actors){
+                if(((a.getX() < (c.getX() + c.getWidth())) && ((a.getX() + a.getWidth()) > c.getX())) && ((a.getY() < (c.getY() + c.getHeight())) && ((a.getY() + a.getHeight()) > c.getY()))){
+                    c.addAction(BlockActions.hideBlock(hideDelay, c));
+                    hideDelay += BlockActions.BACKGROUND_BLOCK_DELAY / 2;
+                    continue;
+                }else if(!a.isVisible()){
+                    c.addAction(BlockActions.showBlock(showDelay, c));
+                    showDelay += BlockActions.BACKGROUND_BLOCK_DELAY / 2;
+                }
+            }
+        }
+        initDone = false;
+        initTime = ((showDelay > hideDelay ? showDelay:hideDelay) * 1000) / 2;
+        initStartTime = System.currentTimeMillis();
+    }
+
+    public boolean canInit(){
+        if(initDone){
+            return false;
+        }
+        if(System.currentTimeMillis() - initStartTime > initTime){
+            initDone = true;
+            return true;
+        }
+        return false;
     }
 }

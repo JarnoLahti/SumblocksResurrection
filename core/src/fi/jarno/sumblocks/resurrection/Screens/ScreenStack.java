@@ -5,6 +5,7 @@ import com.badlogic.gdx.Screen;
 
 import java.util.ArrayList;
 
+import fi.jarno.sumblocks.resurrection.Resources.StageScreen;
 import fi.jarno.sumblocks.resurrection.SumblocksResurrection;
 
 /**
@@ -17,9 +18,11 @@ public class ScreenStack {
         return ourInstance;
     }
 
-    private Game _game;
+    private SumblocksResurrection _game;
 
-    private ArrayList<Screen> _screens;
+    private StageScreen _currentScreen;
+
+    private ArrayList<StageScreen> _screens;
 
     private int _stackSize;
 
@@ -27,20 +30,30 @@ public class ScreenStack {
         _game = new SumblocksResurrection();
         _screens = new ArrayList();
         _stackSize = 0;
+        _currentScreen = null;
     }
 
     public Game getGame(){
         return _game;
     }
 
-    public void PushScreen(Screen screen){
+    public void PushScreen(StageScreen screen){
         _screens.add(screen);
         _stackSize = _screens.size() - 1;
-        _game.setScreen(screen);
+        _currentScreen = screen;
+        _game.updateBackgroundTiles(_currentScreen.getActors());
+        _game.setScreen(_currentScreen);
+    }
+
+    public StageScreen getCurrentScreen(){
+        return _currentScreen;
     }
 
     public void PopScreen(){
-        _game.setScreen(_screens.remove(_stackSize));
+        _screens.remove(_stackSize);
         _stackSize = _screens.size() - 1;
+        _currentScreen = _screens.get(_stackSize);
+        _game.updateBackgroundTiles(_currentScreen.getActors());
+        _game.setScreen(_currentScreen);
     }
 }

@@ -1,4 +1,4 @@
-package fi.jarno.sumblocks.resurrection.Actors;
+package fi.jarno.sumblocks.resurrection.Actors.Game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
@@ -8,12 +8,12 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.utils.Sort;
 
 import java.util.ArrayList;
 import java.util.Random;
 
+import fi.jarno.sumblocks.resurrection.Actors.CustomGroup;
 import fi.jarno.sumblocks.resurrection.Resources.BlockActions;
 import fi.jarno.sumblocks.resurrection.Resources.MatchGroup;
 import fi.jarno.sumblocks.resurrection.Resources.MergeMetadata;
@@ -23,7 +23,7 @@ import fi.jarno.sumblocks.resurrection.Resources.SwipeDirection;
  * Created by Jarno on 04-Jul-17.
  */
 
-public class GameBoard extends DepthGroup{
+public class GameBoard extends CustomGroup {
     private final int BLOCK_OFFSET = 3;
     private float _boardWidth;
     private float _boardHeight;
@@ -289,7 +289,6 @@ public class GameBoard extends DepthGroup{
         int[][] colorMap = initializeColorMap();
 
         // INIT THE BOARD WITH COLOR MAP
-        float initDelay = 0;
         for(int y = 0; y < _rows; y++){
             for(int x = 0; x < _cols; x++) {
                 float blockX = (x * _blockWidth) + BLOCK_OFFSET;
@@ -308,8 +307,6 @@ public class GameBoard extends DepthGroup{
                         blockTexture);
                 block.setScale(0);
                 this.addActor(block);
-                block.addAction(BlockActions.init(initDelay));
-                initDelay += BlockActions.BLOCK_INIT_DELAY;
                 _blockPositions[x][y] = new Vector2(blockX, blockY);
             }
         }
@@ -440,7 +437,7 @@ public class GameBoard extends DepthGroup{
 
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-                if(_drag.isZero() || childActionsRunning()){
+                if(_drag.isZero() || childActionsRunning() || !repopulateChecked || !moveChecked){
                     return true;
                 }
 
@@ -606,5 +603,16 @@ public class GameBoard extends DepthGroup{
 
     public void setUpdateScore(boolean updateScore){
         _updateScore = updateScore;
+    }
+
+    @Override
+    public void initAnimation(float delay) {
+        float initDelay = 0;
+        for (Actor a:getChildren()) {
+            if(a instanceof GameBlock){
+                ((GameBlock) a).initAnimation(initDelay);
+                initDelay += BlockActions.BLOCK_INIT_DELAY;
+            }
+        }
     }
 }

@@ -20,4 +20,7 @@ public class Globals {
     public static final int GAME_SCORE_WIDTH = 160;
     public static final int GAME_SCORE_HEIGHT = 60;
     public static final int GAME_SCORE_Y = 60;
+
+    public static final int LOGO_WIDTH = 320;
+    public static final int LOGO_HEIGHT = 160;
 }

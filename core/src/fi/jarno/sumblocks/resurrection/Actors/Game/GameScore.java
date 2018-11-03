@@ -1,18 +1,22 @@
-package fi.jarno.sumblocks.resurrection.Actors;
+package fi.jarno.sumblocks.resurrection.Actors.Game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+
+import fi.jarno.sumblocks.resurrection.Actors.CustomActor;
+import fi.jarno.sumblocks.resurrection.Resources.BlockActions;
 
 /**
  * Created by Jarno on 17-Nov-17.
  */
 
-public class GameScore extends DepthActor {
+public class GameScore extends CustomActor {
     private final int UPDATE_INTERVAL = 15;
     private GlyphLayout _textSize = new GlyphLayout();
     private ShaderProgram _fontShader;
@@ -46,6 +50,9 @@ public class GameScore extends DepthActor {
     @Override
     public void draw(Batch batch, float parentAlpha) {
         super.draw(batch, parentAlpha);
+        if(getScaleX() == 0 || getScaleY() == 0){
+            return;
+        }
         batch.setShader(_fontShader);
         _font.getData().setScale(getScaleX());
         _textSize.setText(_font, Integer.toString(_currentScore));
@@ -62,5 +69,10 @@ public class GameScore extends DepthActor {
         Texture texture = new Texture(Gdx.files.internal("fonts/score.png"));
         texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         _font = new BitmapFont(Gdx.files.internal("fonts/score.fnt"), new TextureRegion(texture), true);
+    }
+
+    @Override
+    public void initAnimation(float delay) {
+        addAction(BlockActions.init(delay));
     }
 }

@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
  * Created by Jarno on 08-Jul-17.
  */
 
-public class Block extends DepthActor{
+public class Block extends CustomActor {
 
     protected Sprite _sprite;
 
@@ -63,4 +63,9 @@ public class Block extends DepthActor{
     }
 
     public void dispose(){}
+
+    @Override
+    public void initAnimation(float delay) {
+
+    }
 }
